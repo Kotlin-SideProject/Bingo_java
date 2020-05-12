@@ -10,6 +10,8 @@ import android.view.MenuItem;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Arrays;
 
@@ -54,11 +56,8 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth auth) {
-        if(auth.getCurrentUser() != null){
-            Log.d(TAG, "onAuthStateChanged:" +
-                    auth.getCurrentUser().getEmail() + "/" +
-                    auth.getCurrentUser().getUid());
-        }else{
+         FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
             startActivityForResult(
                     AuthUI.getInstance().createSignInIntentBuilder()
                             .setAvailableProviders(Arrays.asList(
@@ -68,6 +67,15 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                             .setIsSmartLockEnabled(false)
                             .build()
                     , RC_SIGN_IN);
+        } else {
+            Log.d(TAG, "onAuthStateChanged:" +
+                    auth.getCurrentUser().getEmail() + "/" +
+                    auth.getCurrentUser().getUid());
+            String displayName = user.getDisplayName();
+            FirebaseDatabase.getInstance().getReference("users")
+                    .child(user.getUid())
+                    .child("displayName")
+                    .setValue(displayName);
         }
     }
 }
