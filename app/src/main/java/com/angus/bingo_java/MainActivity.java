@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,6 +37,22 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_menu_signout:
+                AuthUI.getInstance().signOut(this);
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth auth) {
         if(auth.getCurrentUser() != null){
             Log.d(TAG, "onAuthStateChanged:" +
@@ -47,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                                     new AuthUI.IdpConfig.EmailBuilder().build(),
                                     new AuthUI.IdpConfig.GoogleBuilder().build()
                             ))
+                            .setIsSmartLockEnabled(false)
                             .build()
                     , RC_SIGN_IN);
         }
