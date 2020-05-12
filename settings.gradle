@@ -1,0 +1,2 @@
+rootProject.name='Bingo_java'
+include ':app'
