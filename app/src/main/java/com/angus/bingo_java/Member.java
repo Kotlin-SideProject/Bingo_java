@@ -6,11 +6,11 @@ public class Member {
     String nickName;
     String displayName;
 
-    public int getAvatar() {
+    public int getAvatarId() {
         return avatarId;
     }
 
-    public void setAvatar(int avatar) {
+    public void setAvatarId(int avatar) {
         this.avatarId = avatar;
     }
 
