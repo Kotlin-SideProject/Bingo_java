@@ -10,6 +10,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int RC_SIGN_IN = 100;
     private FirebaseAuth auth;
+    private TextView nickText;
+    private ImageView avatar;
 
     @Override
     protected void onStart() {
@@ -45,6 +49,12 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         auth = FirebaseAuth.getInstance();
+        findViews();
+    }
+
+    private void findViews() {
+        nickText = findViewById(R.id.nickname);
+        avatar = findViewById(R.id.avatar);
     }
 
     @Override
@@ -85,7 +95,27 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                     .child(user.getUid())
                     .child("displayName")
                     .setValue(displayName);
+            //傾聽整筆會員紀錄
             FirebaseDatabase.getInstance().getReference("users")
+                    .child(user.getUid())
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            Member member = dataSnapshot.getValue(Member.class);
+                            if (member.nickName != null){
+                                nickText.setText(member.getNickname());
+                            }else{
+                                showNickNameDialog(displayName);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+
+           /* FirebaseDatabase.getInstance().getReference("users")
                     .child(user.getUid())
                     .child("nickName")
                     .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -102,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                         public void onCancelled(@NonNull DatabaseError databaseError) {
 
                         }
-                    });
+                    });*/
         }
     }
 
