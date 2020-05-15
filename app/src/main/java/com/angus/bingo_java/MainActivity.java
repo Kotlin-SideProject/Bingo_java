@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -36,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     private Group groupAvatars;
     int avatarIds [] = {R.drawable.avatar_0, R.drawable.avatar_1, R.drawable.avatar_2,
             R.drawable.avatar_3, R.drawable.avatar_4, R.drawable.avatar_5, R.drawable.avatar_6};
+    private Member member;
 
     @Override
     protected void onStart() {
@@ -82,6 +84,28 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         findViewById(R.id.avatar_4).setOnClickListener(this);
         findViewById(R.id.avatar_5).setOnClickListener(this);
         findViewById(R.id.avatar_6).setOnClickListener(this);
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final EditText roomEdit = new EditText(MainActivity.this);
+                roomEdit.setText("Wellcome");
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("GameRoom ")
+                                .setMessage("Please enter your Room Title")
+                                .setView(roomEdit)
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                            String roomTitle =  roomEdit.getText().toString();
+                                            GameRoom room = new GameRoom(roomTitle, member);
+                                            FirebaseDatabase.getInstance().getReference("rooms")
+                                                    .push()
+                                                    .setValue(room);
+                                    }
+                                }).show();
+            }
+        });
     }
 
     @Override
@@ -102,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth auth) {
+        Log.d(TAG, "onAuthStateChanged: + QQ");
          FirebaseUser user = auth.getCurrentUser();
         if (user == null) {
             startActivityForResult(
@@ -122,13 +147,18 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                     .child(user.getUid())
                     .child("displayName")
                     .setValue(displayName);
+
+            FirebaseDatabase.getInstance().getReference("users")
+                    .child(user.getUid())
+                    .child("uid")
+                    .setValue(user.getUid());
             //傾聽整筆會員紀錄
             FirebaseDatabase.getInstance().getReference("users")
                     .child(user.getUid())
                     .addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            Member member = dataSnapshot.getValue(Member.class);
+                            member = dataSnapshot.getValue(Member.class);
                             if (member != null){
                                 if (member.nickName != null){
                                     nickText.setText(member.nickName);
