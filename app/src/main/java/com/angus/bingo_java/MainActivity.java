@@ -3,29 +3,37 @@ package com.angus.bingo_java;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.Group;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
-import java.util.EventListener;
 
 public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener, View.OnClickListener {
 
@@ -38,17 +46,21 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     int avatarIds [] = {R.drawable.avatar_0, R.drawable.avatar_1, R.drawable.avatar_2,
             R.drawable.avatar_3, R.drawable.avatar_4, R.drawable.avatar_5, R.drawable.avatar_6};
     private Member member;
+    public FirebaseRecyclerAdapter<GameRoom, RoomHolder> adapter;
 
     @Override
     protected void onStart() {
         super.onStart();
         auth.addAuthStateListener(this);
+        // FirebaseAdapter 需要設定開始傾聽
+        adapter.startListening();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         auth.removeAuthStateListener(this);
+        adapter.stopListening();
     }
 
     @Override
@@ -106,7 +118,51 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                                 }).show();
             }
         });
+        //RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.recycler);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // FirebaseRecyclerOptions 需要 Query
+        Query query = FirebaseDatabase.getInstance().getReference("rooms").limitToLast(30);
+
+        // FirebaseRecyclerAdapter 需要 FirebaseRecyclerOptions
+        FirebaseRecyclerOptions<GameRoom> options = new FirebaseRecyclerOptions.Builder<GameRoom>()
+                .setQuery(query, GameRoom.class)
+                .build();
+        Log.d(TAG, "options: " +options);
+        adapter = new FirebaseRecyclerAdapter<GameRoom, RoomHolder>(options) {
+            @Override
+            protected void onBindViewHolder(@NonNull RoomHolder holder, int position, @NonNull GameRoom gameRoom) {
+                Log.d(TAG, "onBindViewHolder: ");
+                holder.image.setImageResource(avatarIds[gameRoom.init.avatarId]);
+                holder.text.setText(gameRoom.getTitle());
+            }
+
+            @NonNull
+            @Override
+            public RoomHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                Log.d(TAG, "onCreateViewHolder: ");
+                // 當空的時候，產生一個 view 給他
+                View view = LayoutInflater.from(MainActivity.this)
+                        .inflate(R.layout.room_row, parent, false);
+                return new RoomHolder(view);
+            }
+        };
+        recyclerView.setAdapter(adapter);
     }
+    // 若使用 FirebaseUI Database，只需要設計 ViewHolder
+    public class RoomHolder extends RecyclerView.ViewHolder {
+        ImageView image;
+        TextView text;
+        public RoomHolder(@NonNull View itemView) {
+            super(itemView);
+            image = itemView.findViewById(R.id.room_image);
+            text = itemView.findViewById(R.id.room_text);
+        }
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
