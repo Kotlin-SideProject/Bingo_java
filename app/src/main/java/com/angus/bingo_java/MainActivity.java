@@ -1,6 +1,7 @@
 package com.angus.bingo_java;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.Group;
 import androidx.lifecycle.Lifecycle;
@@ -10,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,6 +32,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -113,9 +117,24 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                                             GameRoom room = new GameRoom(roomTitle, member);
                                             FirebaseDatabase.getInstance().getReference("rooms")
                                                     .push()
-                                                    .setValue(room);
+                                                    .setValue(room, new DatabaseReference.CompletionListener() {
+                                                        @Override
+                                                        public void onComplete(@Nullable DatabaseError databaseError,
+                                                                               @NonNull DatabaseReference databaseReference) {
+                                                            if(databaseError == null){
+                                                                String roomId = databaseReference.getKey();
+                                                                Intent bingoIntent = new Intent(MainActivity.this,
+                                                                        BingoActivity.class);
+                                                                bingoIntent.putExtra("ROOM_ID", roomId);
+                                                                bingoIntent.putExtra("IS_CREATOR", true);
+                                                                startActivity(bingoIntent);
+                                                            }
+                                                        }
+                                                    });
                                     }
-                                }).show();
+                                })
+                                .setNegativeButton("cancel", null)
+                                .show();
             }
         });
         //RecyclerView
