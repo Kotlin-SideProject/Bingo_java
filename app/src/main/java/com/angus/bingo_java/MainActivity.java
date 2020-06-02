@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                             String roomTitle =  roomEdit.getText().toString();
-                                            GameRoom room = new GameRoom(roomTitle, member);
+                                            final GameRoom room = new GameRoom(roomTitle, member);
                                             FirebaseDatabase.getInstance().getReference("rooms")
                                                     .push()
                                                     .setValue(room, new DatabaseReference.CompletionListener() {
@@ -123,6 +123,10 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                                                                                @NonNull DatabaseReference databaseReference) {
                                                             if(databaseError == null){
                                                                 String roomId = databaseReference.getKey();
+                                                                FirebaseDatabase.getInstance().getReference("rooms")
+                                                                        .child(roomId)
+                                                                        .child("id")
+                                                                        .setValue(roomId);
                                                                 Intent bingoIntent = new Intent(MainActivity.this,
                                                                         BingoActivity.class);
                                                                 bingoIntent.putExtra("ROOM_ID", roomId);
@@ -152,10 +156,18 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         Log.d(TAG, "options: " +options);
         adapter = new FirebaseRecyclerAdapter<GameRoom, RoomHolder>(options) {
             @Override
-            protected void onBindViewHolder(@NonNull RoomHolder holder, int position, @NonNull GameRoom gameRoom) {
+            protected void onBindViewHolder(@NonNull RoomHolder holder, int position, @NonNull final GameRoom gameRoom) {
                 Log.d(TAG, "onBindViewHolder: ");
                 holder.image.setImageResource(avatarIds[gameRoom.init.avatarId]);
                 holder.text.setText(gameRoom.getTitle());
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent bingoIntent = new Intent(MainActivity.this, BingoActivity.class);
+                        bingoIntent.putExtra("ROOM_ID", gameRoom.id);
+                        startActivity(bingoIntent);
+                    }
+                });
             }
 
             @NonNull

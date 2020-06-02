@@ -27,6 +27,15 @@ import java.util.Map;
 
 public class BingoActivity extends AppCompatActivity {
 
+    public static final int STATUS_INIT = 0;
+    public static final int STATUS_CREATED = 1;
+    public static final int STATUS_JOINED = 2;
+    public static final int STATUS_CREATORS_TURN = 3;
+    public static final int STATUS_JOINER_TURN = 4;
+    public static final int STATUS_CREATOR_BINGO = 5;
+    public static final int STATUS_JOINER_BINGO = 6;
+
+
     private static final String TAG = BingoActivity.class.getSimpleName();
     private TextView infomation;
     private RecyclerView recycler;
@@ -47,6 +56,17 @@ public class BingoActivity extends AppCompatActivity {
                         .child(String.valueOf(i+1))
                         .setValue(false);
             }
+            //change room status
+            FirebaseDatabase.getInstance().getReference("rooms")
+                    .child(roomId)
+                    .child("status")
+                    .setValue(STATUS_CREATED);
+        }else{
+            //change room status
+            FirebaseDatabase.getInstance().getReference("rooms")
+                    .child(roomId)
+                    .child("status")
+                    .setValue(STATUS_JOINED);
         }
         // map for number to position
         final Map<Integer, Integer> numberMap =new HashMap();
@@ -60,8 +80,9 @@ public class BingoActivity extends AppCompatActivity {
         for (int i = 0; i < 25; i++) {
             numberMap.put(buttons.get(i).getNumber(), i);
         }
-        //RecyclerView
 
+
+        //RecyclerView
         Query query = FirebaseDatabase.getInstance().getReference("rooms")
                 .child(roomId)
                 .child("numbers")
