@@ -16,8 +16,10 @@ import com.firebase.ui.common.ChangeEventType;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,20 +36,51 @@ public class BingoActivity extends AppCompatActivity {
     public static final int STATUS_JOINER_TURN = 4;
     public static final int STATUS_CREATOR_BINGO = 5;
     public static final int STATUS_JOINER_BINGO = 6;
+    boolean  myTurn = false;
+    ValueEventListener statusListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                long status = (long) dataSnapshot.getValue();
+                switch((int) status){
+                    case STATUS_CREATED:
+                        infomation.setText("等待對手加入");
+                        break;
+                    case STATUS_JOINED:
+                        infomation.setText("對手已經加入");
+                        FirebaseDatabase.getInstance().getReference("rooms")
+                                .child(roomId)
+                                .child("status")
+                                .setValue(STATUS_CREATORS_TURN);
+                        break;
+                    case STATUS_CREATORS_TURN:
+                        setMyTurn(isCreator);
+                        break;
+                }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
+
 
 
     private static final String TAG = BingoActivity.class.getSimpleName();
     private TextView infomation;
     private RecyclerView recycler;
     private FirebaseRecyclerAdapter<Boolean, NumberHolder> adapter;
+    private String roomId;
+    private Boolean isCreator;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bingo);
-        String roomId = getIntent().getStringExtra("ROOM_ID");
-        Boolean isCreator = getIntent().getBooleanExtra("IS_CREATOR", false);
-        Log.d(TAG, "onCreate:" +roomId + "/" + isCreator);
+        roomId = getIntent().getStringExtra("ROOM_ID");
+        isCreator = getIntent().getBooleanExtra("IS_CREATOR", false);
+        Log.d(TAG, "onCreate:" + roomId + "/" + isCreator);
         if(isCreator){
             for (int i = 0; i < 25; i++) {
                 FirebaseDatabase.getInstance().getReference("rooms")
@@ -132,12 +165,20 @@ public class BingoActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         adapter.startListening();
+        FirebaseDatabase.getInstance().getReference("rooms")
+                .child(roomId)
+                .child("status")
+                .addValueEventListener(statusListener);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         adapter.stopListening();
+        FirebaseDatabase.getInstance().getReference("rooms")
+                .child(roomId)
+                .child("status")
+                .removeEventListener(statusListener);
     }
 
     private void findViews() {
@@ -146,5 +187,13 @@ public class BingoActivity extends AppCompatActivity {
         recycler.setHasFixedSize(true);
         recycler.setLayoutManager(new GridLayoutManager(BingoActivity.this, 5));
         recycler.setAdapter(adapter);
+    }
+    public boolean isMyTurn() {
+        return myTurn;
+    }
+
+    public void setMyTurn(boolean myTurn) {
+        this.myTurn = myTurn;
+        infomation.setText(myTurn ? "請選球" : "等待對手選號");
     }
 }
