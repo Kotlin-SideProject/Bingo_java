@@ -6,7 +6,7 @@ import android.widget.Button;
 
 public class NumberButton extends androidx.appcompat.widget.AppCompatButton {
     int number;
-    Boolean picked;
+    Boolean picked = false;
     int position;
 
     public int getNumber() {

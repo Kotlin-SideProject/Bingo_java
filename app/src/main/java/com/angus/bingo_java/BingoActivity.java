@@ -127,7 +127,19 @@ public class BingoActivity extends AppCompatActivity {
             @Override
             protected void onBindViewHolder(@NonNull NumberHolder holder, int position, @NonNull Boolean model) {
                 holder.button.setText(String.valueOf(buttons.get(position).getNumber()));
-//                holder.button.setEnabled(!model);
+                holder.button.setNumber(buttons.get(position).getNumber());
+                holder.button.setEnabled(!buttons.get(position).picked);
+                holder.button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int number = ((NumberButton)v).getNumber();
+                        FirebaseDatabase.getInstance().getReference("rooms")
+                                .child(roomId)
+                                .child("numbers")
+                                .child(String.valueOf(number))
+                                .setValue(true);
+                    }
+                });
             }
 
             @Override
@@ -135,9 +147,10 @@ public class BingoActivity extends AppCompatActivity {
                 super.onChildChanged(type, snapshot, newIndex, oldIndex);
                 Log.d(TAG, "onChildChanged: " + type + "/" +snapshot.getKey() + "/" + snapshot.getValue());
                 if (type == ChangeEventType.CHANGED){
-                    int numbert = Integer.parseInt(snapshot.getKey());
+                    int number = Integer.parseInt(snapshot.getKey());
                     Boolean picked = (Boolean) snapshot.getValue();
-                    int position = numberMap.get(numbert);
+                    int position = numberMap.get(number);
+                    buttons.get(position).setPicked(picked);
                     NumberHolder holder = (NumberHolder) recycler.findViewHolderForAdapterPosition(position);
                     holder.button.setEnabled(!picked);
                 }
