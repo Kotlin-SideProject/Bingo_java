@@ -165,6 +165,33 @@ public class BingoActivity extends AppCompatActivity {
                     buttons.get(position).setPicked(picked);
                     NumberHolder holder = (NumberHolder) recycler.findViewHolderForAdapterPosition(position);
                     holder.button.setEnabled(!picked);
+
+                    //bingo judge
+                    int nums[] = new int[25];
+
+                    for (int i = 0; i < 25; i++) {
+                        nums[i] = buttons.get(i).picked ? 1:0;
+                    }
+                    int bingo = 0;
+                    for (int i = 0; i < 5; i++) {
+                        int sum = 0;
+                        for (int j = 0; j < 5; j++) {
+                            sum += nums[i*5 + j];// 0 1 2 3 4
+                        }
+                        if(sum == 5)
+                            bingo += 1;
+                        sum = 0;
+
+                        for (int j = 0; j < 5; j++) {
+                            sum += nums[i + j*5]; // 0 5 10 15 20
+                        }
+
+                        if(sum == 5)
+                            bingo += 1;
+                        sum = 0;
+
+                    }
+                    Log.d(TAG, "onChildChanged: bingo " + bingo);
                 }
             }
 
