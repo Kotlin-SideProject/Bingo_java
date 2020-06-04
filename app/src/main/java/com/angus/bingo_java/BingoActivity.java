@@ -55,6 +55,10 @@ public class BingoActivity extends AppCompatActivity {
                     case STATUS_CREATORS_TURN:
                         setMyTurn(isCreator);
                         break;
+
+                    case STATUS_JOINER_TURN:
+                        setMyTurn(!isCreator);
+                        break;
                 }
         }
 
@@ -132,12 +136,20 @@ public class BingoActivity extends AppCompatActivity {
                 holder.button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        int number = ((NumberButton)v).getNumber();
-                        FirebaseDatabase.getInstance().getReference("rooms")
-                                .child(roomId)
-                                .child("numbers")
-                                .child(String.valueOf(number))
-                                .setValue(true);
+                        if(myTurn){
+                            int number = ((NumberButton)v).getNumber();
+                            FirebaseDatabase.getInstance().getReference("rooms")
+                                    .child(roomId)
+                                    .child("numbers")
+                                    .child(String.valueOf(number))
+                                    .setValue(true);
+
+                                FirebaseDatabase.getInstance().getReference("rooms")
+                                        .child(roomId)
+                                        .child("status")
+                                        .setValue(isCreator ? STATUS_JOINER_TURN :STATUS_CREATORS_TURN);
+
+                        }
                     }
                 });
             }
