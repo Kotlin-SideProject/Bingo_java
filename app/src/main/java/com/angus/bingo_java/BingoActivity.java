@@ -1,10 +1,12 @@
 package com.angus.bingo_java;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,6 +61,30 @@ public class BingoActivity extends AppCompatActivity {
                     case STATUS_JOINER_TURN:
                         setMyTurn(!isCreator);
                         break;
+                    case STATUS_CREATOR_BINGO:
+                        new AlertDialog.Builder(BingoActivity.this)
+                                .setTitle("Bingo !!")
+                                .setMessage(isCreator? "恭喜你bingo了" : "對方bingo了")
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        endGame();
+                                    }
+                                })
+                                .show();
+                        break;
+                    case STATUS_JOINER_BINGO:
+                        new AlertDialog.Builder(BingoActivity.this)
+                                .setTitle("Bingo !!")
+                                .setMessage(!isCreator? "恭喜你bingo了" : "對方bingo了")
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        endGame();
+                                    }
+                                })
+                                .show();
+                        break;
                 }
         }
 
@@ -68,6 +94,19 @@ public class BingoActivity extends AppCompatActivity {
         }
     };
 
+    private void endGame() {
+        FirebaseDatabase.getInstance().getReference("rooms")
+                .child(roomId)
+                .child("status")
+                .removeEventListener(statusListener);
+        if(isCreator){
+            FirebaseDatabase.getInstance().getReference("rooms")
+                    .child(roomId)
+                    .removeValue();
+        }
+
+        finish();
+    }
 
 
     private static final String TAG = BingoActivity.class.getSimpleName();
@@ -192,6 +231,12 @@ public class BingoActivity extends AppCompatActivity {
 
                     }
                     Log.d(TAG, "onChildChanged: bingo " + bingo);
+                    if(bingo != 0){
+                        FirebaseDatabase.getInstance().getReference("rooms")
+                                .child(roomId)
+                                .child("status")
+                                .setValue( isCreator? STATUS_CREATOR_BINGO : STATUS_JOINER_BINGO);
+                    }
                 }
             }
 
